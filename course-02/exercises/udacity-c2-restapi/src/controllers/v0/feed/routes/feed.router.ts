@@ -7,6 +7,7 @@ const router: Router = Router();
 
 // Get all feed items
 router.get('/', async (req: Request, res: Response) => {
+    console.log("hit line 10")
     const items = await FeedItem.findAndCountAll({order: [['id', 'DESC']]});
     items.rows.map((item) => {
             if(item.url) {
@@ -18,13 +19,47 @@ router.get('/', async (req: Request, res: Response) => {
 
 //@TODO
 //Add an endpoint to GET a specific resource by Primary Key
+router.get('/:id', async(req: Request, res: Response) => {
+    
+    const {id} = req.params;
+
+    if(!id){
+        res.status(400).send("id is required")
+    }
+
+    const record = await FeedItem.findByPk(id);
+
+    if(!record){
+        res.status(404).send('No record found')
+    }else{
+        const response_record = record['dataValues']
+        res.status(200).send({response_record: response_record})
+    }
+
+});
 
 // update a specific resource
 router.patch('/:id', 
     requireAuth, 
     async (req: Request, res: Response) => {
-        //@TODO try it yourself
-        res.send(500).send("not implemented")
+        const {id} = req.params
+        const {caption} = req.body;
+
+        if(!id){
+            res.status(400).send('id is required')
+        }
+
+        console.log("52 line number")
+        
+        await FeedItem.update({caption: caption}, {where: {id: id}})
+
+        const record = await FeedItem.findByPk(id)
+
+        if(record['dataValues']){
+            res.status(201).send({ message: 'record updated', updatedrecord: record})
+        }else{
+            res.status(404).send('some error')
+        }
 });
 
 
